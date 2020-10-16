@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -29,7 +30,17 @@ func readFile(filename string) map[string]string {
 }
 
 func getData(url string, resetData bool, dataFilename string) (data map[string]string) {
-	if resetData {
+	fsize := int64(0)
+	_, err := os.Open(dataFilename)
+	if err == nil {
+		fStat, err := os.Stat(dataFilename)
+		if err != nil {
+			fsize = 0
+		}
+		fsize = fStat.Size()
+	}
+
+	if resetData || fsize == 0 {
 		data, err := spider.Scan(url, 2)
 		if err != nil {
 			log.Printf("ошибка при сканировании сайта %s: %v\n", url, err)
