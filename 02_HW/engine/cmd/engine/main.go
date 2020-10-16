@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crawler/pkg/spider"
 	"encoding/gob"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -60,6 +62,14 @@ func getData(url string, resetData bool, dataFilename string) (data map[string]s
 	return
 }
 
+func printFounded(data map[string]string, word string) {
+	for k, v := range data {
+		if strings.Contains(strings.ToLower(v), strings.ToLower(word)) {
+			fmt.Printf("%s - %s\n", k, v)
+		}
+	}
+}
+
 func main() {
 	const url = "https://habr.com"
 	var dataFile string = "data.gob"
@@ -68,23 +78,36 @@ func main() {
 	var resetData bool
 	var wordFind string
 
-	flag.BoolVar(&resetData, "reset", false, "saved фмув data will be deleted")
+	flag.BoolVar(&resetData, "reset", false, "saved data will be deleted")
 	flag.BoolVar(&resetData, "r", false, "saved data will be deleted")
 
 	flag.StringVar(&wordFind, "w", "", "the word to be searched for")
 	flag.StringVar(&wordFind, "word", "", "the word to be searched for")
 	flag.Parse()
 
-	if wordFind == "" {
-		fmt.Println("Не задано слова для поиска")
-		return
-	}
-
 	data = getData(url, resetData, dataFile)
 
-	for k, v := range data {
-		if strings.Contains(strings.ToLower(v), strings.ToLower(wordFind)) {
-			fmt.Printf("%s - %s\n", k, v)
+	if wordFind != "" {
+		printFounded(data, wordFind)
+	} else {
+		enter := "Enter word to find: "
+		snr := bufio.NewScanner(os.Stdin)
+
+		for fmt.Print(enter); snr.Scan(); fmt.Print(enter) {
+			word := snr.Text()
+			if strings.Replace(word, " ", "", -1) == "exit" {
+				break
+			}
+			if word != "" {
+				printFounded(data, word)
+			}
+		}
+
+		if err := snr.Err(); err != nil {
+			if err != io.EOF {
+				fmt.Fprintln(os.Stderr, err)
+			}
 		}
 	}
+
 }
