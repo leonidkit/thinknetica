@@ -1,1 +1,0 @@
-# Thinknetica lessons and homeworks
