@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crawler/pkg/spider"
+	"crawler/pkg/spiderblank"
 	"encoding/gob"
 	"flag"
 	"fmt"
@@ -14,6 +15,27 @@ import (
 	"strings"
 )
 
+type Scanner interface {
+	Scan(url string, depth int) (map[string]string, error)
+}
+
+type Crawler struct {
+	Scanner
+}
+
+func (c *Crawler) Scan(url string, depth int) (map[string]string, error) {
+	return spider.Scan(url, depth)
+}
+
+type Crawlerblank struct {
+	Scanner
+}
+
+func (c *Crawlerblank) Scan(url string, depth int) (map[string]string, error) {
+	return spiderblank.Scan(url, depth)
+}
+
+// Функция читает файл и возвращает декодированный из формата gob словарь.
 func readFile(filename string) map[string]string {
 	var data = make(map[string]string)
 
@@ -31,7 +53,9 @@ func readFile(filename string) map[string]string {
 	return data
 }
 
-func getData(url string, resetData bool, dataFilename string) (data map[string]string) {
+// Функция проверяет на возможность чтения файл dataFileName и если не указан флаг -r или -reset читает из этого файла.
+// В противном случае, если файл невозможно прочитать или укзааны флаги -r и -reset сканирует сайт по url и записывает эти данные в dataFileName.
+func getData(scanner Scanner, url string, resetData bool, dataFilename string) map[string]string {
 	fsize := int64(0)
 	_, err := os.Open(dataFilename)
 	if err == nil {
@@ -42,26 +66,28 @@ func getData(url string, resetData bool, dataFilename string) (data map[string]s
 		fsize = fStat.Size()
 	}
 
-	if resetData || fsize == 0 {
-		data, err := spider.Scan(url, 2)
-		if err != nil {
-			log.Printf("ошибка при сканировании сайта %s: %v\n", url, err)
-		}
-		defer func() {
-			b := new(bytes.Buffer)
-			e := gob.NewEncoder(b)
-			err := e.Encode(data)
-			if err != nil {
-				panic(err)
-			}
-			err = ioutil.WriteFile(dataFilename, b.Bytes(), 0664)
-		}()
-	} else {
-		data = readFile(dataFilename)
+	if !resetData && fsize != 0 {
+		return readFile(dataFilename)
 	}
-	return
+
+	data, err := scanner.Scan(url, 2)
+	if err != nil {
+		log.Printf("ошибка при сканировании сайта %s: %v\n", url, err)
+	}
+	defer func() {
+		b := new(bytes.Buffer)
+		e := gob.NewEncoder(b)
+		err := e.Encode(data)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(dataFilename, b.Bytes(), 0664)
+	}()
+
+	return data
 }
 
+// Функция для происхождения по словарю data и вывода на печать совпадений с word.
 func printFounded(data map[string]string, word string) {
 	for k, v := range data {
 		if strings.Contains(strings.ToLower(v), strings.ToLower(word)) {
@@ -72,6 +98,7 @@ func printFounded(data map[string]string, word string) {
 
 func main() {
 	const url = "https://habr.com"
+
 	var dataFile string = "data.gob"
 	var data = make(map[string]string)
 
@@ -85,29 +112,32 @@ func main() {
 	flag.StringVar(&wordFind, "word", "", "the word to be searched for")
 	flag.Parse()
 
-	data = getData(url, resetData, dataFile)
+	var cr = &Crawler{}
+	var sc Scanner = cr
+
+	data = getData(sc, url, resetData, dataFile)
 
 	if wordFind != "" {
 		printFounded(data, wordFind)
-	} else {
-		enter := "Enter word to find: "
-		snr := bufio.NewScanner(os.Stdin)
+		return
+	}
 
-		for fmt.Print(enter); snr.Scan(); fmt.Print(enter) {
-			word := snr.Text()
-			if strings.Replace(word, " ", "", -1) == "exit" {
-				break
-			}
-			if word != "" {
-				printFounded(data, word)
-			}
+	enter := "Enter word to find: "
+	snr := bufio.NewScanner(os.Stdin)
+
+	for fmt.Print(enter); snr.Scan(); fmt.Print(enter) {
+		word := snr.Text()
+		if strings.Replace(word, " ", "", -1) == "exit" {
+			break
 		}
-
-		if err := snr.Err(); err != nil {
-			if err != io.EOF {
-				fmt.Fprintln(os.Stderr, err)
-			}
+		if word != "" {
+			printFounded(data, word)
 		}
 	}
 
+	if err := snr.Err(); err != nil {
+		if err != io.EOF {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 }
