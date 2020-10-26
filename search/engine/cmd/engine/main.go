@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
+	"indexer/pkg/index"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,17 +20,13 @@ type Scanner interface {
 	Scan(url string, depth int) (map[string]string, error)
 }
 
-type Crawler struct {
-	Scanner
-}
+type Crawler struct{}
 
 func (c *Crawler) Scan(url string, depth int) (map[string]string, error) {
 	return spider.Scan(url, depth)
 }
 
-type Crawlerblank struct {
-	Scanner
-}
+type Crawlerblank struct{}
 
 func (c *Crawlerblank) Scan(url string, depth int) (map[string]string, error) {
 	return spiderblank.Scan(url, depth)
@@ -88,11 +85,10 @@ func getData(scanner Scanner, url string, resetData bool, dataFilename string) m
 }
 
 // Функция для происхождения по словарю data и вывода на печать совпадений с word.
-func printFounded(data map[string]string, word string) {
-	for k, v := range data {
-		if strings.Contains(strings.ToLower(v), strings.ToLower(word)) {
-			fmt.Printf("%s - %s\n", k, v)
-		}
+func printFounded(i *index.Invert, word string) {
+	recs := i.FindRecord(word)
+	for _, rec := range recs {
+		fmt.Printf("%s - %s\n", rec.URL, rec.Title)
 	}
 }
 
@@ -117,8 +113,10 @@ func main() {
 
 	data = getData(sc, url, resetData, dataFile)
 
+	var indexer = index.NewIndex(data)
+
 	if wordFind != "" {
-		printFounded(data, wordFind)
+		printFounded(indexer, wordFind)
 		return
 	}
 
@@ -131,7 +129,7 @@ func main() {
 			break
 		}
 		if word != "" {
-			printFounded(data, word)
+			printFounded(indexer, word)
 		}
 	}
 
