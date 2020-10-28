@@ -1,6 +1,7 @@
 package index
 
 import (
+	"fmt"
 	"hash/fnv"
 	"sort"
 	"strings"
@@ -28,7 +29,7 @@ func NewIndex(data map[string]string) *Invert {
 	// TODO: каждую запись в горутине обрабатывать и, соответственно, использовать sync.Map
 	for url, title := range data {
 		newDoc := &Document{
-			ID:    getHashNum(url),
+			ID:    hashNum(url),
 			Title: title,
 			URL:   url,
 		}
@@ -38,7 +39,9 @@ func NewIndex(data map[string]string) *Invert {
 			trimWord := strings.ToLower(strings.TrimFunc(word, func(r rune) bool {
 				return unicode.IsPunct(r)
 			}))
-			lindx[trimWord] = append(lindx[trimWord], newDoc.ID)
+			if !checkOccurrence(lindx[trimWord], newDoc.ID) {
+				lindx[trimWord] = append(lindx[trimWord], newDoc.ID)
+			}
 		}
 	}
 
@@ -58,14 +61,17 @@ func (i *Invert) FindRecord(record string) []Document {
 	docs := i.index[record]
 
 	for _, address := range docs {
-		index := BinarySearch(address, i.docs)
+		index, err := BinarySearch(address, i.docs)
+		if err != nil {
+			continue
+		}
 		records = append(records, i.docs[index])
 	}
 	return records
 }
 
 // Ищет запись uint64 в слайсе []Document по значению, являющемся полем ID в структуре Document
-func BinarySearch(value uint64, source []Document) int64 {
+func BinarySearch(value uint64, source []Document) (int64, error) {
 	left := int64(0)
 	right := int64(len(source))
 
@@ -73,20 +79,30 @@ func BinarySearch(value uint64, source []Document) int64 {
 		mid := int64((left + right) / 2)
 
 		if value == source[mid].ID {
-			return mid
+			return mid, nil
 		}
 		if value < source[mid].ID {
-			right = mid
+			right = mid - 1
 		} else {
-			left = mid
+			left = mid + 1
 		}
 	}
-	return -1
+	return int64(0), fmt.Errorf("nothing found")
 }
 
 // Возвращает хэш от строки
-func getHashNum(data string) uint64 {
+func hashNum(data string) uint64 {
 	h := fnv.New64a()
 	h.Write([]byte(data))
 	return h.Sum64()
+}
+
+// Возвращает true если value имеется в слайсе data, иначе false
+func checkOccurrence(data []uint64, value uint64) bool {
+	for _, val := range data {
+		if val == value {
+			return true
+		}
+	}
+	return false
 }

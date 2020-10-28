@@ -9,9 +9,15 @@ import (
 	"golang.org/x/net/html"
 )
 
+type WebScan struct{}
+
+func NewSpider() *WebScan {
+	return &WebScan{}
+}
+
 // Scan осуществляет рекурсивный обход ссылок сайта, указанного в URL,
 // с учётом глубины перехода по ссылкам, переданной в depth.
-func Scan(url string, depth int) (data map[string]string, err error) {
+func (w *WebScan) Scan(url string, depth int) (data map[string]string, err error) {
 	data = make(map[string]string)
 
 	parse(url, url, depth, data)
