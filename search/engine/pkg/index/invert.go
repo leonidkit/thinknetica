@@ -71,12 +71,12 @@ func (i *Invert) FindRecord(record string) []Document {
 }
 
 // Ищет запись uint64 в слайсе []Document по значению, являющемся полем ID в структуре Document
-func BinarySearch(value uint64, source []Document) (int64, error) {
-	left := int64(0)
-	right := int64(len(source))
+func BinarySearch(value uint64, source []Document) (uint64, error) {
+	left := uint64(0)
+	right := uint64(len(source) - 1)
 
 	for left <= right {
-		mid := int64((left + right) / 2)
+		mid := uint64((left + right) / 2)
 
 		if value == source[mid].ID {
 			return mid, nil
@@ -87,7 +87,8 @@ func BinarySearch(value uint64, source []Document) (int64, error) {
 			left = mid + 1
 		}
 	}
-	return int64(0), fmt.Errorf("nothing found")
+
+	return uint64(0), fmt.Errorf("nothing found")
 }
 
 // Возвращает хэш от строки

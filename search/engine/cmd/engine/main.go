@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crawler/pkg/spider"
 	"encoding/gob"
+	"engine/pkg/index"
+	"engine/pkg/spider"
 	"flag"
 	"fmt"
-	"indexer/pkg/index"
 	"io"
 	"io/ioutil"
 	"log"
@@ -79,7 +79,7 @@ func getData(scanner Scanner, url string, resetData bool, dataFilename string) (
 }
 
 // Функция для происхождения по словарю data и вывода на печать совпадений с word.
-func printFounded(i *index.Invert, word string) {
+func printFound(i *index.Invert, word string) {
 	recs := i.FindRecord(word)
 	for _, rec := range recs {
 		fmt.Printf("%s - %s\n", rec.URL, rec.Title)
@@ -111,7 +111,7 @@ func main() {
 	var indexer = index.NewIndex(data)
 
 	if wordFind != "" {
-		printFounded(indexer, wordFind)
+		printFound(indexer, wordFind)
 		return
 	}
 
@@ -124,7 +124,7 @@ func main() {
 			break
 		}
 		if word != "" {
-			printFounded(indexer, word)
+			printFound(indexer, word)
 		}
 	}
 
