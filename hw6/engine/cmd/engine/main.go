@@ -67,19 +67,19 @@ func main() {
 
 	data, err := LoadFile(datafname)
 	if err != nil {
-		log.Printf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
+		log.Fatalf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
 	}
 
 	go func(chdata chan<- map[string]string) {
 		var cr = spider.New()
 		data, err = cr.Scan(url, 2)
 		if err != nil {
-			log.Fatalf("ошибка при получении данных с сайта %s: %v\n", url, err)
+			log.Printf("ошибка при получении данных с сайта %s: %v\n", url, err)
 		}
 
 		err = DumpFile(data, datafname)
 		if err != nil {
-			log.Fatalf("ошибка при сохрании результатов сканирования: %v\n", err)
+			log.Printf("ошибка при сохрании результатов сканирования: %v\n", err)
 		}
 
 		chdata <- data
