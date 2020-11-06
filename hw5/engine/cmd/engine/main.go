@@ -5,7 +5,6 @@ import (
 	"engine/pkg/index"
 	"engine/pkg/spider"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -15,22 +14,22 @@ type Scanner interface {
 	Scan(url string, depth int) (map[string]string, error)
 }
 
-func printFound(i *index.InvertTree, word string) error {
+func Found(i *index.InvertedTree, word string) (string, error) {
 	recs, err := i.FindRecord(word)
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, rec := range recs {
-		fmt.Printf("%s - %s\n", rec.URL, rec.Title)
+		return fmt.Sprintf("%s - %s\n", rec.URL, rec.Title), nil
 	}
-	return nil
+	return "", nil
 }
 
 func main() {
 	const url = "https://habr.com"
 
-	var cr = spider.NewSpider()
-	data, err := cr.Scan(url, 2)
+	var cr = spider.New()
+	data, err := cr.Scan(url, 1)
 	if err != nil {
 		log.Fatalf("ошибка при получении данных с сайта %s: %v\n", url, err)
 	}
@@ -46,16 +45,15 @@ func main() {
 			break
 		}
 		if word != "" {
-			err = printFound(indexer, word)
+			r, err := Found(indexer, word)
 			if err != nil {
 				log.Print(err.Error())
 			}
+			fmt.Print(r)
 		}
 	}
 
 	if err := snr.Err(); err != nil {
-		if err != io.EOF {
-			fmt.Fprintln(os.Stderr, err)
-		}
+		log.Fatal(err)
 	}
 }

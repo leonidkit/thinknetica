@@ -11,7 +11,7 @@ import (
 
 type WebScan struct{}
 
-func NewSpider() *WebScan {
+func New() *WebScan {
 	return &WebScan{}
 }
 

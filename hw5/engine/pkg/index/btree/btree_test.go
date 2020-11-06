@@ -5,17 +5,17 @@ import (
 )
 
 type Document struct {
-	Id    uint64
+	ID    uint64
 	Title string
 	URL   string
 }
 
-func (d *Document) ID() uint64 {
-	return d.Id
+func (d *Document) Ident() uint64 {
+	return d.ID
 }
 
 func TestSearch(t *testing.T) {
-	tr := NewTree()
+	tr := New()
 
 	for i := 0; i < 500; i++ {
 		err := tr.Add(&Document{Id: uint64(i), Title: "Title", URL: "URL"})
@@ -33,8 +33,8 @@ func TestSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error searching an item in tree: %s", err.Error())
 	} else {
-		if got.ID() != want.ID() {
-			t.Fatalf("error searching an item in tree: want %d, but got %d", want.ID(), got.ID())
+		if got.Ident() != want.Ident() {
+			t.Fatalf("error searching an item in tree: want %d, but got %d", want.Ident(), got.Ident())
 		}
 	}
 }

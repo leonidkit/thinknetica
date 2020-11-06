@@ -13,35 +13,34 @@ import (
 )
 
 type Document struct {
-	Id    uint64
+	ID    uint64
 	Title string
 	URL   string
 }
 
 type Index map[string][]uint64
 
-type InvertList struct {
+type InvertedList struct {
 	index Index
 	docs  []Document
 }
 
-type InvertTree struct {
+type InvertedTree struct {
 	index Index
 	docs  *btree.Tree
 }
 
-func (d *Document) ID() uint64 {
-	return d.Id
+func (d *Document) Ident() uint64 {
+	return d.ID
 }
 
-// Возвращает новый объект структуры индекса на деревьях
-func NewIndexTree(data map[string]string) *InvertTree {
-	var tree = btree.NewTree()
+func NewIndexTree(data map[string]string) *InvertedTree {
+	var tree = btree.New()
 	var lindx = make(Index, len(data)*3)
 
 	for url, title := range data {
 		newDoc := &Document{
-			Id:    rand.Uint64(),
+			ID:    rand.Uint64(),
 			Title: title,
 			URL:   url,
 		}
@@ -51,27 +50,26 @@ func NewIndexTree(data map[string]string) *InvertTree {
 			trimWord := strings.ToLower(strings.TrimFunc(word, func(r rune) bool {
 				return unicode.IsPunct(r)
 			}))
-			if !checkOccurrence(lindx[trimWord], newDoc.Id) {
-				lindx[trimWord] = append(lindx[trimWord], newDoc.Id)
+			if !checkOccurrence(lindx[trimWord], newDoc.ID) {
+				lindx[trimWord] = append(lindx[trimWord], newDoc.ID)
 			}
 		}
 	}
 
-	return &InvertTree{
+	return &InvertedTree{
 		lindx,
 		tree,
 	}
 }
 
-// Возвращает новый объект структуры индекса на списках
-func NewIndexList(data map[string]string) *InvertList {
+func NewIndexList(data map[string]string) *InvertedList {
 	var ldocs = make([]Document, 0, len(data))
 	var lindx = make(Index, len(data)*3)
 
 	// TODO: каждую запись в горутине обрабатывать и, соответственно, использовать sync.Map
 	for url, title := range data {
 		newDoc := &Document{
-			Id:    rand.Uint64(),
+			ID:    rand.Uint64(),
 			Title: title,
 			URL:   url,
 		}
@@ -81,24 +79,24 @@ func NewIndexList(data map[string]string) *InvertList {
 			trimWord := strings.ToLower(strings.TrimFunc(word, func(r rune) bool {
 				return unicode.IsPunct(r)
 			}))
-			if !checkOccurrence(lindx[trimWord], newDoc.Id) {
-				lindx[trimWord] = append(lindx[trimWord], newDoc.Id)
+			if !checkOccurrence(lindx[trimWord], newDoc.ID) {
+				lindx[trimWord] = append(lindx[trimWord], newDoc.ID)
 			}
 		}
 	}
 
 	sort.Slice(ldocs, func(i, j int) bool {
-		return ldocs[i].Id < ldocs[j].Id
+		return ldocs[i].ID < ldocs[j].ID
 	})
 
-	return &InvertList{
+	return &InvertedList{
 		lindx,
 		ldocs,
 	}
 }
 
 // Возвращает слайс []Document с записями в которых найдена strings
-func (i *InvertList) FindRecord(record string) ([]Document, error) {
+func (i *InvertedList) FindRecord(record string) ([]Document, error) {
 	records := []Document{}
 	docs := i.index[record]
 
@@ -113,13 +111,13 @@ func (i *InvertList) FindRecord(record string) ([]Document, error) {
 }
 
 // Возвращает слайс []Document с записями в которых найдена strings
-func (i *InvertTree) FindRecord(record string) ([]*Document, error) {
+func (i *InvertedTree) FindRecord(record string) ([]*Document, error) {
 	records := []*Document{}
 	docs := i.index[record]
 
 	for _, address := range docs {
 		res, err := i.docs.Search(&Document{
-			Id:    address,
+			ID:    address,
 			Title: "",
 			URL:   "",
 		})
@@ -131,21 +129,21 @@ func (i *InvertTree) FindRecord(record string) ([]*Document, error) {
 	return records, nil
 }
 
-// Ищет запись uint64 в слайсе []Document по значению, являющемся полем Id в структуре Document
+// Ищет запись uint64 в слайсе []Document по значению, являющемся полем ID в структуре Document
 func binarySearch(value uint64, source []Document) (int64, error) {
 	left := int64(0)
 	right := int64(len(source))
 
 	for left <= right {
-		mId := int64((left + right) / 2)
+		mID := int64((left + right) / 2)
 
-		if value == source[mId].Id {
-			return mId, nil
+		if value == source[mID].ID {
+			return mID, nil
 		}
-		if value < source[mId].Id {
-			right = mId - 1
+		if value < source[mID].ID {
+			right = mID - 1
 		} else {
-			left = mId + 1
+			left = mID + 1
 		}
 	}
 	return int64(0), fmt.Errorf("nothing found")

@@ -6,7 +6,7 @@ import (
 )
 
 type Valuer interface {
-	ID() uint64
+	Ident() uint64
 }
 
 type Tree struct {
@@ -15,7 +15,7 @@ type Tree struct {
 	Right *Tree
 }
 
-func NewTree() *Tree {
+func New() *Tree {
 	return &Tree{
 		Left:  nil,
 		Value: nil,
@@ -38,10 +38,10 @@ func (t *Tree) Add(d Valuer) error {
 		return nil
 	}
 
-	if d.(Valuer).ID() == t.Value.ID() {
+	if d.(Valuer).Ident() == t.Value.Ident() {
 		return errors.New("element already exist")
 	}
-	if d.(Valuer).ID() < t.Value.ID() {
+	if d.(Valuer).Ident() < t.Value.Ident() {
 		if t.Left == nil {
 			t.Left = &Tree{
 				Left:  nil,
@@ -52,7 +52,7 @@ func (t *Tree) Add(d Valuer) error {
 		}
 		t.Left.Add(d)
 	}
-	if d.(Valuer).ID() > t.Value.ID() {
+	if d.(Valuer).Ident() > t.Value.Ident() {
 		if t.Right == nil {
 			t.Right = &Tree{
 				Left:  nil,
@@ -77,11 +77,11 @@ func (t *Tree) Search(d Valuer) (Valuer, error) {
 		return nil, errors.New("document not found")
 	}
 
-	if t.Value.ID() == d.(Valuer).ID() {
+	if t.Value.Ident() == d.(Valuer).Ident() {
 		return t.Value, nil
 	}
 
-	if d.(Valuer).ID() < t.Value.ID() {
+	if d.(Valuer).Ident() < t.Value.Ident() {
 		return t.Left.Search(d)
 	} else {
 		return t.Right.Search(d)
@@ -96,7 +96,7 @@ func (t *Tree) Print(depth int) (res string) {
 	for i := 0; i < depth; i++ {
 		res += "\t"
 	}
-	res += strconv.FormatUint(t.Value.ID(), 10) + "\n"
+	res += strconv.FormatUint(t.Value.Ident(), 10) + "\n"
 	res += t.Left.Print(depth + 1)
 	return res
 }

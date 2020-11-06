@@ -11,7 +11,7 @@ import (
 func TestScanSite(t *testing.T) {
 	const url = "https://habr.com"
 	const depth = 2
-	sp := NewSpider()
+	sp := New()
 	data, err := sp.Scan(url, depth)
 	if err != nil {
 		t.Fatal(err)
