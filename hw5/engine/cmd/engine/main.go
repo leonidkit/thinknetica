@@ -15,7 +15,6 @@ type Scanner interface {
 	Scan(url string, depth int) (map[string]string, error)
 }
 
-// Функция для происхождения по словарю data и вывода на печать совпадений с word.
 func printFound(i *index.InvertTree, word string) error {
 	recs, err := i.FindRecord(word)
 	if err != nil {
