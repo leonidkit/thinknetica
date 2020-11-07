@@ -7,6 +7,7 @@ import (
 	"engine/pkg/index"
 	"engine/pkg/spider"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,27 +18,15 @@ type Scanner interface {
 	Scan(url string, depth int) (map[string]string, error)
 }
 
-func Found(i *index.InvertedTree, word string) (string, error) {
-	recs, err := i.FindRecord(word)
-	if err != nil {
-		return "", err
-	}
-	for _, rec := range recs {
-		return fmt.Sprintf("%s - %s\n", rec.URL, rec.Title), nil
-	}
-	return "", nil
-}
-
-func DumpFile(data map[string]string, filename string) error {
-	b := new(bytes.Buffer)
-	e := gob.NewEncoder(b)
+func DumpFile(buf io.Writer, data map[string]string, filename string) error {
+	e := gob.NewEncoder(buf)
 
 	err := e.Encode(data)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filename, b.Bytes(), 0664)
+	err = ioutil.WriteFile(filename, buf.Bytes(), 0664)
 	if err != nil {
 		return err
 	}
@@ -49,15 +38,34 @@ func LoadFile(filename string) (map[string]string, error) {
 
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return map[string]string{}, err
+		return nil, err
 	}
 
 	bReader := bytes.NewReader(content)
 	d := gob.NewDecoder(bReader)
 
-	d.Decode(&data)
+	err = d.Decode(&data)
+	if err != nil {
+		return nil, err
+	}
 
 	return data, nil
+}
+
+func ScanAsync(chdata chan<- map[string]string, url string, filename string) {
+	var cr = spider.New()
+	data, err := cr.Scan(url, 2)
+	if err != nil {
+		log.Printf("ошибка при получении данных с сайта %s: %v\n", url, err)
+	}
+
+	buf := new(bytes.Buffer)
+	err = DumpFile(buf, data, filename)
+	if err != nil {
+		log.Printf("ошибка при сохрании результатов сканирования: %v\n", err)
+	}
+
+	chdata <- data
 }
 
 func main() {
@@ -70,27 +78,14 @@ func main() {
 		log.Fatalf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
 	}
 
-	go func(chdata chan<- map[string]string) {
-		var cr = spider.New()
-		data, err = cr.Scan(url, 2)
-		if err != nil {
-			log.Printf("ошибка при получении данных с сайта %s: %v\n", url, err)
-		}
-
-		err = DumpFile(data, datafname)
-		if err != nil {
-			log.Printf("ошибка при сохрании результатов сканирования: %v\n", err)
-		}
-
-		chdata <- data
-	}(chdata)
+	go ScanAsync(chdata, url, datafname)
 
 	var indexer = index.NewIndexTree(data)
 
 	enter := "Enter word to find: "
 	snr := bufio.NewScanner(os.Stdin)
 
-LOOP:
+OUT:
 	for fmt.Print(enter); snr.Scan(); fmt.Print(enter) {
 		select {
 		case data = <-chdata:
@@ -98,14 +93,17 @@ LOOP:
 		default:
 			word := snr.Text()
 			if strings.Replace(word, " ", "", -1) == "exit" {
-				break LOOP
+				break OUT
 			}
 			if word != "" {
-				r, err := Found(indexer, word)
+				recs, err := indexer.FindRecord(word)
 				if err != nil {
-					log.Print(err.Error())
+					log.Printf("ошибка при поиске запроса %s: %v\n", word, err)
+					continue OUT
 				}
-				fmt.Print(r)
+				for _, rec := range recs {
+					fmt.Printf("%s - %s\n", rec.URL, rec.Title)
+				}
 			}
 		}
 	}
