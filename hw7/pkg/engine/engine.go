@@ -16,7 +16,7 @@ func New(index index.Interface) *Service {
 	}
 }
 
-func (s *Service) Search(query string) ([]*crawler.Document, error) {
+func (s *Service) Search(query string) ([]crawler.Document, error) {
 	if query == "" {
 		return nil, fmt.Errorf("пустой запрос")
 	}

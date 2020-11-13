@@ -31,7 +31,7 @@ func NewIndexTree(data []crawler.Document) *InvertedTree {
 
 	for _, row := range data {
 		row.ID = rand.Uint64()
-		tree.Add(&row)
+		tree.Add(row)
 
 		for _, word := range strings.Split(row.Title, " ") {
 			trimWord := strings.ToLower(strings.TrimFunc(word, func(r rune) bool {
@@ -94,8 +94,8 @@ func (i *InvertedList) Find(record string) ([]crawler.Document, error) {
 }
 
 // Возвращает слайс []crawler.Document с записями в которых найдена strings
-func (i *InvertedTree) Find(record string) ([]*crawler.Document, error) {
-	records := []*crawler.Document{}
+func (i *InvertedTree) Find(record string) ([]crawler.Document, error) {
+	records := []crawler.Document{}
 	docs := i.index[record]
 
 	for _, address := range docs {
@@ -107,7 +107,7 @@ func (i *InvertedTree) Find(record string) ([]*crawler.Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		records = append(records, res.(*crawler.Document))
+		records = append(records, res.(crawler.Document))
 	}
 	return records, nil
 }

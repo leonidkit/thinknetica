@@ -2,18 +2,17 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/gob"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gosearch/pkg/crawler"
 	"gosearch/pkg/crawler/spider"
 	"gosearch/pkg/engine"
 	"gosearch/pkg/index/invert"
+	"gosearch/pkg/storage"
 )
 
 type Gosearch struct {
@@ -21,74 +20,33 @@ type Gosearch struct {
 	engine  *engine.Service
 }
 
-func ScanAsync(app *Gosearch, chdata chan<- []crawler.Document, url string, depth int, filename string) {
-	data, err := app.crawler.Scan(url, depth)
+func (g *Gosearch) ScanAsync(chdata chan<- []crawler.Document, flr *storage.Filer, url string, depth int, filename string) {
+	data, err := g.crawler.Scan(url, depth)
 	if err != nil {
-		log.Printf("ошибка при получении данных с сайта %s: %v\n", url, err)
+		log.Fatalf("ошибка при получении данных с сайта %s: %v\n", url, err)
 	}
 
-	err = DumpFile(data, filename)
+	err = flr.DumpFile(data, filename)
 	if err != nil {
-		log.Printf("ошибка при сохрании результатов сканирования: %v\n", err)
+		log.Fatalf("ошибка при сохрании результатов сканирования: %v\n", err)
 	}
 
 	chdata <- data
 }
 
-func DumpFile(data []crawler.Document, filename string) error {
-	buf := new(bytes.Buffer)
-	e := gob.NewEncoder(buf)
-
-	prepdata := make(map[string]string, len(data))
-	for _, row := range data {
-		prepdata[row.URL] = row.Title
-	}
-
-	err := e.Encode(prepdata)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filename, buf.Bytes(), 0664)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func LoadFile(filename string) ([]crawler.Document, error) {
-	var data = make(map[string]string)
-
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	bReader := bytes.NewReader(content)
-	d := gob.NewDecoder(bReader)
-
-	err = d.Decode(&data)
-	if err != nil {
-		return nil, err
-	}
-
-	var resdata []crawler.Document
-	for url, title := range data {
-		resdata = append(resdata, crawler.Document{
-			URL:   url,
-			Title: title,
-		})
-	}
-
-	return resdata, nil
-}
-
 func main() {
 	const url = "https://habr.com"
 	const datafname = "data.gob"
-	chdata := make(chan []crawler.Document)
+	path, err := os.Getwd()
+	if err != nil {
+		log.Fatal("не удалось получить абсолютный путь к файлу с данными")
+	}
 
-	data, err := LoadFile(datafname)
+	chdata := make(chan []crawler.Document)
+	flr := storage.New()
+
+	log.Print(filepath.Join(path, datafname))
+	data, err := flr.LoadFile(filepath.Join(path, datafname))
 	if err != nil {
 		log.Printf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
 	}
@@ -102,7 +60,7 @@ func main() {
 		engine:  engn,
 	}
 
-	go ScanAsync(app, chdata, url, 1, datafname)
+	//	go app.ScanAsync(chdata, flr, url, 2, datafname)
 
 	enter := "Enter word to find: "
 	snr := bufio.NewScanner(os.Stdin)

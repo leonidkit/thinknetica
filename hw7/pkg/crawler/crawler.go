@@ -10,6 +10,6 @@ type Document struct {
 	URL   string
 }
 
-func (d *Document) Ident() uint64 {
+func (d Document) Ident() uint64 {
 	return d.ID
 }
