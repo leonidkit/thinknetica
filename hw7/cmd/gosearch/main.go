@@ -45,7 +45,6 @@ func main() {
 	chdata := make(chan []crawler.Document)
 	flr := storage.New()
 
-	log.Print(filepath.Join(path, datafname))
 	data, err := flr.LoadFile(filepath.Join(path, datafname))
 	if err != nil {
 		log.Printf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
@@ -60,7 +59,7 @@ func main() {
 		engine:  engn,
 	}
 
-	//	go app.ScanAsync(chdata, flr, url, 2, datafname)
+	go app.ScanAsync(chdata, flr, url, 2, datafname)
 
 	enter := "Enter word to find: "
 	snr := bufio.NewScanner(os.Stdin)
