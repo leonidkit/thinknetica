@@ -18,20 +18,21 @@ import (
 type Gosearch struct {
 	crawler crawler.Interface
 	engine  *engine.Service
+	filer   *storage.Filer
 }
 
-func (g *Gosearch) ScanAsync(chdata chan<- []crawler.Document, flr *storage.Filer, url string, depth int, filename string) {
+func (g *Gosearch) ScanAsync(url string, depth int, filename string) {
 	data, err := g.crawler.Scan(url, depth)
 	if err != nil {
 		log.Fatalf("ошибка при получении данных с сайта %s: %v\n", url, err)
 	}
 
-	err = flr.DumpFile(data, filename)
+	err = g.filer.DumpFile(data, filename)
 	if err != nil {
 		log.Fatalf("ошибка при сохрании результатов сканирования: %v\n", err)
 	}
 
-	chdata <- data
+	g.engine.Index = invert.NewIndexTree(data)
 }
 
 func main() {
@@ -42,47 +43,40 @@ func main() {
 		log.Fatal("не удалось получить абсолютный путь к файлу с данными")
 	}
 
-	chdata := make(chan []crawler.Document)
+	spdr := spider.New()
 	flr := storage.New()
 
-	data, err := flr.LoadFile(filepath.Join(path, datafname))
+	app := &Gosearch{
+		crawler: spdr,
+		filer:   flr,
+	}
+
+	data, err := app.filer.LoadFile(filepath.Join(path, datafname))
 	if err != nil {
 		log.Printf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
 	}
 
 	indx := invert.NewIndexTree(data)
-	engn := engine.New(indx)
-	spdr := spider.New()
+	app.engine = engine.New(indx)
 
-	app := &Gosearch{
-		crawler: spdr,
-		engine:  engn,
-	}
-
-	go app.ScanAsync(chdata, flr, url, 2, datafname)
+	go app.ScanAsync(url, 2, datafname)
 
 	enter := "Enter word to find: "
 	snr := bufio.NewScanner(os.Stdin)
 
-OUT:
 	for fmt.Print(enter); snr.Scan(); fmt.Print(enter) {
-		select {
-		case data = <-chdata:
-			app.engine.Index = invert.NewIndexTree(data)
-		default:
-			word := snr.Text()
-			if strings.Replace(word, " ", "", -1) == "exit" {
-				break OUT
+		word := snr.Text()
+		if strings.Replace(word, " ", "", -1) == "exit" {
+			break
+		}
+		if word != "" {
+			recs, err := app.engine.Search(word)
+			if err != nil {
+				log.Printf("ошибка при поиске запроса %s: %v\n", word, err)
+				continue
 			}
-			if word != "" {
-				recs, err := app.engine.Search(word)
-				if err != nil {
-					log.Printf("ошибка при поиске запроса %s: %v\n", word, err)
-					continue OUT
-				}
-				for _, rec := range recs {
-					fmt.Printf("%s - %s\n", rec.URL, rec.Title)
-				}
+			for _, rec := range recs {
+				fmt.Printf("%s - %s\n", rec.URL, rec.Title)
 			}
 		}
 	}
