@@ -6,17 +6,15 @@ import (
 	"testing"
 )
 
-type TestCase struct {
-	IsError   bool
-	ErrorText string
-	Want      *crawler.Document
-}
-
 func TestAdd(t *testing.T) {
 	tr := New()
 
-	testCases := []TestCase{
-		TestCase{
+	testCases := []struct {
+		IsError   bool
+		ErrorText string
+		Want      *crawler.Document
+	}{
+		{
 			IsError:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
@@ -25,7 +23,7 @@ func TestAdd(t *testing.T) {
 				"",
 			},
 		},
-		TestCase{
+		{
 			IsError:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
@@ -34,7 +32,7 @@ func TestAdd(t *testing.T) {
 				"",
 			},
 		},
-		TestCase{
+		{
 			IsError:   true,
 			ErrorText: "element already exist",
 			Want: &crawler.Document{
@@ -43,7 +41,7 @@ func TestAdd(t *testing.T) {
 				"",
 			},
 		},
-		TestCase{
+		{
 			IsError:   true,
 			ErrorText: "element is nil",
 			Want:      nil,
@@ -83,8 +81,18 @@ func TestSearch(t *testing.T) {
 		}
 	}
 
-	testCases := []TestCase{
-		TestCase{
+	type TestCase struct {
+		IsError   bool
+		ErrorText string
+		Want      *crawler.Document
+	}
+
+	testCases := []struct {
+		IsError   bool
+		ErrorText string
+		Want      *crawler.Document
+	}{
+		{
 			IsError:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
@@ -93,7 +101,7 @@ func TestSearch(t *testing.T) {
 				"",
 			},
 		},
-		TestCase{
+		{
 			IsError:   true,
 			ErrorText: "document not found",
 			Want: &crawler.Document{
@@ -102,7 +110,7 @@ func TestSearch(t *testing.T) {
 				"",
 			},
 		},
-		TestCase{
+		{
 			IsError:   true,
 			ErrorText: "element is nil",
 			Want:      nil,

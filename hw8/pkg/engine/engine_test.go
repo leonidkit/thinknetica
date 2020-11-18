@@ -10,15 +10,13 @@ func TestSearch(t *testing.T) {
 
 	engine := New(idx)
 
-	want := "как"
-	_, err := engine.Search(want)
+	_, err := engine.Search("как")
 	if err != nil {
 		t.Fatalf("ожидался результат, а получена ошибка: %s", err.Error())
 	}
 
-	want = ""
 	wantErr := "пустой запрос"
-	_, err = engine.Search(want)
+	_, err = engine.Search("")
 	if err != nil {
 		if err.Error() != wantErr {
 			t.Fatalf("ожидалась ошибка %s, а получена: %s", wantErr, err.Error())

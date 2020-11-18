@@ -1,6 +1,6 @@
 // Содержит стурктуру, представляющую собой инвертированный индекс и методы этой структуры
 // для создания индекса и поиска по этому индексу
-package invert
+package inverted
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"unicode"
 
 	"gosearch/pkg/crawler"
-	"gosearch/pkg/index/invert/btree"
+	"gosearch/pkg/index/inverted/btree"
 )
 
 type Index map[string][]uint64
@@ -96,7 +96,10 @@ func (i *InvertedList) Find(record string) ([]crawler.Document, error) {
 // Возвращает слайс []crawler.Document с записями в которых найдена strings
 func (i *InvertedTree) Find(record string) ([]crawler.Document, error) {
 	records := []crawler.Document{}
-	docs := i.index[record]
+	docs, exist := i.index[record]
+	if !exist {
+		return records, fmt.Errorf("index not found")
+	}
 
 	for _, address := range docs {
 		res, err := i.docs.Search(&crawler.Document{

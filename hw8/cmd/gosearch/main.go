@@ -11,7 +11,7 @@ import (
 	"gosearch/pkg/crawler"
 	"gosearch/pkg/crawler/spider"
 	"gosearch/pkg/engine"
-	"gosearch/pkg/index/invert"
+	"gosearch/pkg/index/inverted"
 	"gosearch/pkg/storage"
 )
 
@@ -32,7 +32,7 @@ func (g *Gosearch) ScanAsync(url string, depth int, filename string) {
 		log.Fatalf("ошибка при сохрании результатов сканирования: %v\n", err)
 	}
 
-	g.engine.Index = invert.NewIndexTree(data)
+	g.engine.Index = inverted.NewIndexTree(data)
 }
 
 func main() {
@@ -56,7 +56,7 @@ func main() {
 		log.Printf("ошибка при загрузки данных из файла %s: %v\n", datafname, err)
 	}
 
-	indx := invert.NewIndexTree(data)
+	indx := inverted.NewIndexTree(data)
 	app.engine = engine.New(indx)
 
 	go app.ScanAsync(url, 2, datafname)
