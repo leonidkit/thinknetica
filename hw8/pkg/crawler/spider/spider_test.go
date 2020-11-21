@@ -11,7 +11,7 @@ import (
 
 var online = flag.Bool("online", false, "only perform local tests")
 
-func TestScanSite(t *testing.T) {
+func TestScan(t *testing.T) {
 	if !*online {
 		t.Skip()
 	}
