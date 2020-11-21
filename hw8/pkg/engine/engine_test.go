@@ -40,26 +40,26 @@ func TestService_Search(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"Тестирование поиска",
-			fields{
+			name: "Тестирование поиска",
+			fields: fields{
 				fakeindex.New(),
 			},
-			args{
+			args: args{
 				"как",
 			},
-			want,
-			false,
+			want:    want,
+			wantErr: false,
 		},
 		{
-			"Тестирование поиска пустого запроса",
-			fields{
+			name: "Тестирование поиска пустого запроса",
+			fields: fields{
 				fakeindex.New(),
 			},
-			args{
+			args: args{
 				"",
 			},
-			nil,
-			true,
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

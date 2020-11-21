@@ -9,21 +9,22 @@ import (
 	"testing"
 )
 
-var offline = flag.Bool("online", false, "only perform local tests")
+var online = flag.Bool("online", false, "only perform local tests")
 
 func TestScanSite(t *testing.T) {
-	if *offline {
-		const url = "https://habr.com"
-		const depth = 1
+	if !*online {
+		t.Skip()
+	}
+	const url = "https://habr.com"
+	const depth = 1
 
-		sp := New()
-		data, err := sp.Scan(url, depth)
-		if err != nil {
-			t.Fatal(err)
-		}
+	sp := New()
+	data, err := sp.Scan(url, depth)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		for _, v := range data {
-			t.Logf("%s -> %s\n", v.Title, v.URL)
-		}
+	for _, v := range data {
+		t.Logf("%s -> %s\n", v.Title, v.URL)
 	}
 }
