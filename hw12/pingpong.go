@@ -45,7 +45,7 @@ func (p *Player) ping(table Table) {
 
 	table <- &Ball{
 		command: "ping",
-		powered: p.boost(p.luck),
+		powered: p.boost(),
 	}
 }
 
@@ -54,13 +54,13 @@ func (p *Player) pong(table Table) {
 
 	table <- &Ball{
 		command: "pong",
-		powered: p.boost(p.luck),
+		powered: p.boost(),
 	}
 }
 
-func (p *Player) boost(r *rand.Rand) bool {
+func (p *Player) boost() bool {
 	powered := false
-	num := r.Intn(100)
+	num := p.luck.Intn(100)
 	if (num + 1) < 20 {
 		powered = true
 	}
