@@ -149,6 +149,7 @@ func (g *Game) String() string {
 func main() {
 	var wg sync.WaitGroup
 	table := make(Table)
+	defer close(table)
 
 	p1 := &Player{
 		name: "first",
