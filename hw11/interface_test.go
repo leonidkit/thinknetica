@@ -47,7 +47,12 @@ func TestMaxAgeHuman(t *testing.T) {
 			"Тестирование основной функциональности",
 			args{
 				people: []interface{}{
-					&Customer{24}, &Employee{22},
+					&Customer{
+						age: 24,
+					},
+					&Employee{
+						age: 22,
+					},
 				},
 			},
 			&Customer{24},
