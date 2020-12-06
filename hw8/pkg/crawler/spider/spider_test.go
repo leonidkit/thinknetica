@@ -11,6 +11,7 @@ import (
 
 var online = flag.Bool("online", false, "only perform local tests")
 
+// Для запуска теста требуется фалг -online=true
 func TestScan(t *testing.T) {
 	if !*online {
 		t.Skip()
