@@ -11,63 +11,63 @@ var (
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
-type Table chan *Ball
+type table chan *ball
 
-type Ball struct {
+type ball struct {
 	command string
 	powered bool
 }
 
-type Player struct {
+type player struct {
 	name  string
 	score int
 	luck  *rand.Rand
 }
 
-func (p *Player) begin(table Table) {
+func (p *player) begin(table table) {
 	fmt.Println("begin")
 
-	table <- &Ball{
+	table <- &ball{
 		command: "begin",
 	}
 }
 
-func (p *Player) stop(table Table) {
+func (p *player) stop(table table) {
 	fmt.Println("stop")
 
-	table <- &Ball{
+	table <- &ball{
 		command: "stop",
 	}
 }
 
-func (p *Player) ping(table Table) {
+func (p *player) ping(table table) {
 	fmt.Println(p.name + " - ping")
 
-	table <- &Ball{
+	table <- &ball{
 		command: "ping",
 		powered: p.boost(),
 	}
 }
 
-func (p *Player) pong(table Table) {
+func (p *player) pong(table table) {
 	fmt.Println(p.name + " - pong")
 
-	table <- &Ball{
+	table <- &ball{
 		command: "pong",
 		powered: p.boost(),
 	}
 }
 
-func (p *Player) boost() bool {
+func (p *player) boost() bool {
 	powered := false
 	num := p.luck.Intn(100)
-	if (num + 1) < 20 {
+	if (num + 1) < 21 {
 		powered = true
 	}
 	return powered
 }
 
-func (p *Player) Play(table Table, wg *sync.WaitGroup) {
+func (p *player) Play(table table, wg *sync.WaitGroup) {
 	defer wg.Done()
 OUT:
 	for b := range table {
@@ -93,9 +93,9 @@ OUT:
 }
 
 type Game struct {
-	table   Table
-	pfirst  *Player
-	ptwice  *Player
+	table   table
+	pfirst  *player
+	psecond *player
 	ballnum int
 	coin    *rand.Rand
 	wg      *sync.WaitGroup
@@ -107,16 +107,14 @@ func (g *Game) Run() {
 			fmt.Print(g)
 			break
 		}
-		g.wg.Add(1)
+		g.wg.Add(2)
 		go g.pfirst.Play(g.table, g.wg)
-
-		g.wg.Add(1)
-		go g.ptwice.Play(g.table, g.wg)
+		go g.psecond.Play(g.table, g.wg)
 
 		if g.flipCoin() {
 			g.pfirst.begin(g.table)
 		} else {
-			g.ptwice.begin(g.table)
+			g.psecond.begin(g.table)
 		}
 
 		g.wg.Wait()
@@ -134,13 +132,13 @@ func (g *Game) flipCoin() bool {
 
 func (g *Game) String() string {
 	var res string
-	res = fmt.Sprintf("[SCORE]:\n%s\t%d points\n%s\t%d points\n", g.pfirst.name, g.pfirst.score, g.ptwice.name, g.ptwice.score)
-	if g.pfirst.score > g.ptwice.score {
+	res = fmt.Sprintf("[SCORE]:\n%s\t%d points\n%s\t%d points\n", g.pfirst.name, g.pfirst.score, g.psecond.name, g.psecond.score)
+	if g.pfirst.score > g.psecond.score {
 		res += fmt.Sprintf("%s player win!!!\n", g.pfirst.name)
 		return res
 	}
-	if g.pfirst.score < g.ptwice.score {
-		res += fmt.Sprintf("%s player win!!!\n", g.ptwice.name)
+	if g.pfirst.score < g.psecond.score {
+		res += fmt.Sprintf("%s player win!!!\n", g.psecond.name)
 		return res
 	}
 	return res + fmt.Sprint("Draw!!!")
@@ -148,22 +146,22 @@ func (g *Game) String() string {
 
 func main() {
 	var wg sync.WaitGroup
-	table := make(Table)
+	table := make(table)
 	defer close(table)
 
-	p1 := &Player{
+	p1 := &player{
 		name: "first",
 		luck: r,
 	}
-	p2 := &Player{
-		name: "twice",
+	p2 := &player{
+		name: "second",
 		luck: r,
 	}
 
 	g := &Game{
 		table:   table,
 		pfirst:  p1,
-		ptwice:  p2,
+		psecond: p2,
 		ballnum: 0,
 		coin:    r,
 		wg:      &wg,
