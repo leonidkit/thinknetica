@@ -10,12 +10,12 @@ func TestAdd(t *testing.T) {
 	tr := New()
 
 	testCases := []struct {
-		IsError   bool
+		wantErr   bool
 		ErrorText string
 		Want      *crawler.Document
 	}{
 		{
-			IsError:   false,
+			wantErr:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
 				uint64(2),
@@ -24,7 +24,7 @@ func TestAdd(t *testing.T) {
 			},
 		},
 		{
-			IsError:   false,
+			wantErr:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
 				uint64(3),
@@ -33,7 +33,7 @@ func TestAdd(t *testing.T) {
 			},
 		},
 		{
-			IsError:   true,
+			wantErr:   true,
 			ErrorText: "element already exist",
 			Want: &crawler.Document{
 				uint64(2),
@@ -42,7 +42,7 @@ func TestAdd(t *testing.T) {
 			},
 		},
 		{
-			IsError:   true,
+			wantErr:   true,
 			ErrorText: "element is nil",
 			Want:      nil,
 		},
@@ -50,17 +50,17 @@ func TestAdd(t *testing.T) {
 
 	for i, tt := range testCases {
 		err := tr.Add(tt.Want)
-		if tt.IsError && err != nil {
+		if tt.wantErr && err != nil {
 			if err.Error() != tt.ErrorText {
 				t.Fatalf("[%d] ожидалась ошибка \"%s\", а получена \"%s\"", i, tt.ErrorText, err.Error())
 			}
 		}
 
-		if tt.IsError && err == nil {
+		if tt.wantErr && err == nil {
 			t.Fatalf("[%d] ожидалась ошибка \"%s\", но ошибка не получена", i, tt.ErrorText)
 		}
 
-		if !tt.IsError && err != nil {
+		if !tt.wantErr && err != nil {
 			t.Fatalf("[%d] ожидалось \"%v\", а получена ошибка \"%s\"", i, tt.Want, err.Error())
 		}
 	}
@@ -81,13 +81,13 @@ func TestSearch(t *testing.T) {
 		}
 	}
 
-	testCases := []struct {
-		IsError   bool
+	tests := []struct {
+		wantErr   bool
 		ErrorText string
 		Want      *crawler.Document
 	}{
 		{
-			IsError:   false,
+			wantErr:   false,
 			ErrorText: "",
 			Want: &crawler.Document{
 				uint64(2),
@@ -96,7 +96,7 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			IsError:   true,
+			wantErr:   true,
 			ErrorText: "document not found",
 			Want: &crawler.Document{
 				uint64(3),
@@ -105,29 +105,29 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			IsError:   true,
+			wantErr:   true,
 			ErrorText: "element is nil",
 			Want:      nil,
 		},
 	}
 
-	for i, tt := range testCases {
+	for i, tt := range tests {
 		got, err := tree.Search(tt.Want)
-		if tt.IsError && err != nil {
+		if tt.wantErr && err != nil {
 			if err.Error() != tt.ErrorText {
 				t.Fatalf("[%d] ожидалась ошибка \"%s\", а получена \"%s\"", i, tt.ErrorText, err.Error())
 			}
 		}
 
-		if tt.IsError && err == nil {
+		if tt.wantErr && err == nil {
 			t.Fatalf("[%d] ожидалась ошибка \"%s\", но ошибка не получена", i, tt.ErrorText)
 		}
 
-		if !tt.IsError && err != nil {
+		if !tt.wantErr && err != nil {
 			t.Fatalf("[%d] ожидалось \"%v\", а получена ошибка \"%s\"", i, tt.Want, err.Error())
 		}
 
-		if !tt.IsError && err != nil {
+		if !tt.wantErr && err != nil {
 			if got.Ident() != tt.Want.Ident() {
 				t.Fatalf("[%d] ошибка поиска элемента в дереве: ожидалось \"%d\", но получили \"%d\"", i, tt.Want.Ident(), got.Ident())
 			}
