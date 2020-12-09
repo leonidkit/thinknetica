@@ -104,7 +104,7 @@ func (s *Service) Search(w http.ResponseWriter, r *http.Request) {
 	data := mux.Vars(r)["query"]
 	result := s.engine.Search(data)
 
-	// добавление длины запроса в байтах в гистограмму длин запроса
+	// добавление длины запроса в байтах
 	searchRequestsLength.Add(float64(len(data)))
 
 	// увеличение счётчика поисковых запросов
