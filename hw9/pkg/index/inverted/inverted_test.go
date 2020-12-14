@@ -125,13 +125,13 @@ func Test_binarySearch(t *testing.T) {
 }
 
 func BenchmarkNewIndexTree(b *testing.B) {
+	var err error
 	if *dataFilename != "" {
 		flr := storage.New()
-		data, err := flr.LoadFile(*dataFilename)
+		data, err = flr.LoadFile(*dataFilename)
 		if err != nil {
 			b.Fatal(err.Error())
 		}
-		_ = data
 	}
 
 	for i := 0; i <= b.N; i++ {
@@ -141,13 +141,13 @@ func BenchmarkNewIndexTree(b *testing.B) {
 }
 
 func BenchmarkNewIndexList(b *testing.B) {
+	var err error
 	if *dataFilename != "" {
 		flr := storage.New()
-		data, err := flr.LoadFile(*dataFilename)
+		data, err = flr.LoadFile(*dataFilename)
 		if err != nil {
 			b.Fatal(err.Error())
 		}
-		_ = data
 	}
 
 	for i := 0; i <= b.N; i++ {
@@ -157,13 +157,13 @@ func BenchmarkNewIndexList(b *testing.B) {
 }
 
 func BenchmarkInvertedTree_Find(b *testing.B) {
+	var err error
 	if *dataFilename != "" {
 		flr := storage.New()
-		data, err := flr.LoadFile(*dataFilename)
+		data, err = flr.LoadFile(*dataFilename)
 		if err != nil {
 			b.Fatal(err.Error())
 		}
-		_ = data
 	}
 	indx := NewIndexTree(data)
 
@@ -177,13 +177,13 @@ func BenchmarkInvertedTree_Find(b *testing.B) {
 }
 
 func BenchmarkInvertedList_Find(b *testing.B) {
+	var err error
 	if *dataFilename != "" {
 		flr := storage.New()
-		data, err := flr.LoadFile(*dataFilename)
+		data, err = flr.LoadFile(*dataFilename)
 		if err != nil {
 			b.Fatal(err.Error())
 		}
-		_ = data
 	}
 	indx := NewIndexList(data)
 
