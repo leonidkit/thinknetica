@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"gosearch/pkg/crawler"
 	"gosearch/pkg/crawler/spider"
@@ -25,21 +26,23 @@ func (g *Gosearch) ScanAsync(urls []string, depth int, filename string) {
 	dataCh, errCh := g.crawler.BatchScan(urls, depth, 10)
 	var data []crawler.Document
 
-OUT:
-	for {
-		select {
-		case err, ok := <-errCh:
-			if !ok {
-				break OUT
-			}
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		for err := range errCh {
 			log.Printf("ошибка при получении данных с сайта: %s\n", err.Error())
-		case doc, ok := <-dataCh:
-			if !ok {
-				break OUT
-			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for doc := range dataCh {
 			data = append(data, doc)
 		}
-	}
+	}()
+	wg.Wait()
 
 	err := g.filer.DumpFile(data, filename)
 	if err != nil {
