@@ -24,9 +24,9 @@ func New(host string, port string, engine engine.Service) *Netsrv {
 // Принимает соединение с запросом, в ответ пишет результат поиска по запросу
 func (n *Netsrv) searchInteractive(conn net.Conn) {
 	query := bufio.NewReader(conn)
-
 	for {
 		line, err := query.ReadString('\n')
+
 		if err != nil {
 			conn.Write([]byte("error occured:" + err.Error() + "\n"))
 			return
@@ -51,21 +51,27 @@ func (n *Netsrv) searchInteractive(conn net.Conn) {
 				return
 			}
 		}
+		conn.Write([]byte("done\n"))
 	}
 }
 
-func (n *Netsrv) Serve() error {
+func (n *Netsrv) Serve() chan error {
+	errCh := make(chan error)
 	lstnr, err := net.Listen("tcp4", n.host+":"+n.port)
 	if err != nil {
-		return err
+		errCh <- err
 	}
 
-	for {
-		conn, err := lstnr.Accept()
-		if err != nil {
-			return err
+	go func() {
+		for {
+			conn, err := lstnr.Accept()
+			if err != nil {
+				errCh <- err
+			}
+
+			go n.searchInteractive(conn)
 		}
+	}()
 
-		go n.searchInteractive(conn)
-	}
+	return errCh
 }

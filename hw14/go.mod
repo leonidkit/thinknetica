@@ -22,5 +22,5 @@ require (
 	gosearch/pkg/index v0.0.0 // indirect
 	gosearch/pkg/index/inverted v0.0.0
 	gosearch/pkg/index/inverted/btree v0.0.0-00010101000000-000000000000 // indirect
-	gosearch/pkg/netsrv v0.0.0-00010101000000-000000000000 // indirect
+	gosearch/pkg/netsrv v0.0.0-00010101000000-000000000000
 )
