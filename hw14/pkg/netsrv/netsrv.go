@@ -55,23 +55,18 @@ func (n *Netsrv) searchInteractive(conn net.Conn) {
 	}
 }
 
-func (n *Netsrv) Serve() chan error {
-	errCh := make(chan error)
+func (n *Netsrv) Serve() error {
 	lstnr, err := net.Listen("tcp4", n.host+":"+n.port)
 	if err != nil {
-		errCh <- err
+		return err
 	}
 
-	go func() {
-		for {
-			conn, err := lstnr.Accept()
-			if err != nil {
-				errCh <- err
-			}
-
-			go n.searchInteractive(conn)
+	for {
+		conn, err := lstnr.Accept()
+		if err != nil {
+			return err
 		}
-	}()
 
-	return errCh
+		go n.searchInteractive(conn)
+	}
 }
