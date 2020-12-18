@@ -22,7 +22,7 @@ func New(host string, port string, engine engine.Service) *Netsrv {
 }
 
 // Принимает соединение с запросом, в ответ пишет результат поиска по запросу
-func (n *Netsrv) searchInteractive(conn net.Conn) {
+func (n *Netsrv) searchHandler(conn net.Conn) {
 	query := bufio.NewReader(conn)
 	for {
 		line, err := query.ReadString('\n')
@@ -67,6 +67,6 @@ func (n *Netsrv) Serve() error {
 			return err
 		}
 
-		go n.searchInteractive(conn)
+		go n.searchHandler(conn)
 	}
 }
