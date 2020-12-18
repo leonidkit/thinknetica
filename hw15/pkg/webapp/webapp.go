@@ -75,16 +75,14 @@ func (wa *WebApp) Docs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
-		resp, err := json.Marshal(map[string]string{
+		resp := map[string]string{
 			"error": "method not allowed",
-		})
+		}
+		err := json.NewEncoder(w).Encode(resp)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
-			return
 		}
-
-		w.Write(resp)
 		return
 	}
 
