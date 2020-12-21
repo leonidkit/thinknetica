@@ -43,7 +43,7 @@ func NewIndexTree(data []crawler.Document) *InvertedTree {
 	}
 }
 
-func (i *InvertedTree) Recieve() index.Index {
+func (i *InvertedTree) Index() index.Index {
 	return i.index
 }
 

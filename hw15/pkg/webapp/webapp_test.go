@@ -1,14 +1,13 @@
 package webapp
 
 import (
-	"encoding/json"
 	"gosearch/pkg/crawler"
 	"gosearch/pkg/engine"
 	"gosearch/pkg/index/fakeindex"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -34,18 +33,20 @@ var (
 		},
 	}
 	engn = engine.New(indx, data)
+	host = "0.0.0.0"
+	port = "8000"
 )
 
 type Case struct {
 	Method string
 	Path   string
 	Status int
-	Result map[string]interface{}
+	Result string
 }
 
 func TestIndex(t *testing.T) {
 	wa := New(*engn)
-	ts := httptest.NewServer(wa)
+	ts := httptest.NewServer(wa.handlers())
 	defer ts.Close()
 
 	tests := []Case{
@@ -53,23 +54,19 @@ func TestIndex(t *testing.T) {
 			Method: "GET",
 			Path:   "/index",
 			Status: http.StatusOK,
-			Result: nil,
+			Result: "",
 		},
 		{
 			Method: "POST",
 			Path:   "/index",
 			Status: http.StatusMethodNotAllowed,
-			Result: map[string]interface{}{
-				"error": "method not allowed",
-			},
+			Result: "",
 		},
 		{
 			Method: "GET",
 			Path:   "/indexx",
 			Status: http.StatusNotFound,
-			Result: map[string]interface{}{
-				"error": "unknown endpoint",
-			},
+			Result: "page not found",
 		},
 	}
 
@@ -98,16 +95,10 @@ func TestIndex(t *testing.T) {
 				t.Errorf("[%d] reading body error: %v", idx, err)
 				continue
 			}
+			sbody := string(body)
 
-			var result interface{}
-			err = json.Unmarshal(body, &result)
-			if err != nil {
-				t.Errorf("[%d] unmarshaling response error: %v", idx, err)
-				continue
-			}
-
-			if !reflect.DeepEqual(result, tt.Result) {
-				t.Errorf("[%d] results not match\nGot: %#v\nExpected: %#v", idx, result, tt.Result)
+			if !strings.Contains(sbody, tt.Result) {
+				t.Errorf("[%d] results not match\nGot: %#v\nExpected: %#v", idx, sbody, tt.Result)
 				continue
 			}
 		}
@@ -116,7 +107,7 @@ func TestIndex(t *testing.T) {
 
 func TestDocs(t *testing.T) {
 	wa := New(*engn)
-	ts := httptest.NewServer(wa)
+	ts := httptest.NewServer(wa.handlers())
 	defer ts.Close()
 
 	tests := []Case{
@@ -124,23 +115,19 @@ func TestDocs(t *testing.T) {
 			Method: "GET",
 			Path:   "/index",
 			Status: http.StatusOK,
-			Result: nil,
+			Result: "",
 		},
 		{
 			Method: "POST",
 			Path:   "/docs",
 			Status: http.StatusMethodNotAllowed,
-			Result: map[string]interface{}{
-				"error": "method not allowed",
-			},
+			Result: "",
 		},
 		{
 			Method: "GET",
 			Path:   "/docss",
 			Status: http.StatusNotFound,
-			Result: map[string]interface{}{
-				"error": "unknown endpoint",
-			},
+			Result: "page not found",
 		},
 	}
 
@@ -164,21 +151,20 @@ func TestDocs(t *testing.T) {
 		}
 
 		if tt.Status != http.StatusOK {
+			// пропуск кейса в ответе на который не приходит тело
+			if tt.Result == "" {
+				continue
+			}
+
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				t.Errorf("[%d] reading body error: %v", idx, err)
 				continue
 			}
+			sbody := string(body)
 
-			var result interface{}
-			err = json.Unmarshal(body, &result)
-			if err != nil {
-				t.Errorf("[%d] unmarshaling response error: %v", idx, err)
-				continue
-			}
-
-			if !reflect.DeepEqual(result, tt.Result) {
-				t.Errorf("[%d] results not match\nGot: %#v\nExpected: %#v", idx, result, tt.Result)
+			if !strings.Contains(sbody, tt.Result) {
+				t.Errorf("[%d] results not match\nGot: %#v\nExpected: %#v", idx, sbody, tt.Result)
 				continue
 			}
 		}

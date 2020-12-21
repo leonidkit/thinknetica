@@ -45,6 +45,8 @@ func (g *Gosearch) ScanAsync(urls []string, depth int) {
 
 func main() {
 	urls := []string{"https://habr.com", "https://go.dev", "https://golang.org/"}
+	port := "8000"
+	host := "0.0.0.0"
 
 	spdr := spider.New()
 	app := &Gosearch{
@@ -52,7 +54,9 @@ func main() {
 	}
 	app.ScanAsync(urls, 1)
 
-	srv := webapp.New(*app.engine)
+	srv := webapp.New(
+		*app.engine,
+	)
 
-	http.ListenAndServe(":8000", srv)
+	http.ListenAndServe(host+":"+port, srv.handlers())
 }

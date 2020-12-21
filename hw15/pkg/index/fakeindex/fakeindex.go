@@ -11,7 +11,7 @@ func New() *FakeIndex {
 	return &FakeIndex{}
 }
 
-func (f *FakeIndex) Recieve() index.Index {
+func (f *FakeIndex) Index() index.Index {
 	return index.Index{"как": []uint64{1123123, 12432343, 1242544}}
 }
 
