@@ -53,11 +53,6 @@ func JSONError(w http.ResponseWriter, resp interface{}, code int) {
 }
 
 func (as *AuthServer) Auth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	h := md5.New()
 	ai := authInfo{}
 	err := json.NewDecoder(r.Body).Decode(&ai)

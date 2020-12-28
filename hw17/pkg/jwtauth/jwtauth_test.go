@@ -20,8 +20,8 @@ type Case struct {
 }
 
 func TestAuth(t *testing.T) {
-	hs := httptest.NewServer(&AuthServer{})
-	defer hs.Close()
+	api := &AuthServer{}
+	api.Endpoints()
 
 	tcases := []Case{
 		Case{
@@ -86,21 +86,12 @@ func TestAuth(t *testing.T) {
 			log.Fatal(err.Error())
 		}
 
-		req, err := http.NewRequest(tt.Method, hs.URL+tt.Path, bytes.NewBuffer(reqstr))
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		req := httptest.NewRequest(tt.Method, "/auth", bytes.NewBuffer(reqstr))
+		rr := httptest.NewRecorder()
 
-		client := &http.Client{}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != tt.Code {
-			log.Fatalf("[%d] expected http status %v, got %v", idx, tt.Code, resp.StatusCode)
+		api.Handler.ServeHTTP(rr, req)
+		if rr.Code != tt.Code {
+			log.Fatalf("[%d] expected http status %v, got %v", idx, tt.Code, rr.Code)
 		}
 
 		// пропуск для кейса, когда не ожидаем что-либо от сервера в теле ответа
@@ -109,7 +100,7 @@ func TestAuth(t *testing.T) {
 		}
 
 		var respJSON interface{}
-		err = json.NewDecoder(resp.Body).Decode(&respJSON)
+		err = json.NewDecoder(rr.Body).Decode(&respJSON)
 		if err != nil {
 			if err != io.EOF {
 				log.Fatalf("[%d] json response was expected, got unmarshaling error: %v", idx, err.Error())
@@ -117,7 +108,7 @@ func TestAuth(t *testing.T) {
 		}
 
 		// тестирование кейса с ошибкой
-		if resp.StatusCode != 200 {
+		if rr.Code != 200 {
 			respMap, ok := respJSON.(map[string]interface{})
 			if !ok {
 				log.Fatalf("[%d] map[string]string response was expected, got %v", idx, respJSON)
