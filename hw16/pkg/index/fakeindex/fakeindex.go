@@ -1,25 +1,68 @@
 package fakeindex
 
 import (
+	"fmt"
 	"gosearch/pkg/crawler"
 	"gosearch/pkg/index"
+	"math/rand"
+	"strings"
+	"time"
 )
 
-type FakeIndex struct{}
+var r = rand.New(rand.NewSource(time.Now().Unix()))
 
-func New() *FakeIndex {
-	return &FakeIndex{}
+type FakeIndex struct {
+	index index.Index
+	docs  []crawler.Document
 }
 
-func (f *FakeIndex) Add(title string, url string) error {
+func New(data []crawler.Document) *FakeIndex {
+	return &FakeIndex{
+		docs: data,
+	}
+}
+
+func (f *FakeIndex) Add(url string, title string) error {
+	f.docs = append(f.docs, crawler.Document{
+		ID:    r.Uint64(),
+		Title: title,
+		URL:   url,
+	})
 	return nil
 }
 
 func (f *FakeIndex) Delete(ID uint64) error {
+	var isDeleted bool = false
+
+	for i, doc := range f.docs {
+		if doc.ID == ID {
+			isDeleted = true
+			f.docs[i] = f.docs[len(f.docs)-1]
+			f.docs[len(f.docs)-1] = crawler.Document{}
+			f.docs = f.docs[:len(f.docs)-1]
+		}
+	}
+
+	if !isDeleted {
+		return fmt.Errorf("document not found")
+	}
 	return nil
 }
 
-func (f *FakeIndex) Update(ID uint64, title, url string) error {
+func (f *FakeIndex) Update(ID uint64, url, title string) error {
+	var isUpdated bool = false
+
+	for i, doc := range f.docs {
+		if doc.ID == ID {
+			isUpdated = true
+			f.docs[i].Title = title
+			f.docs[i].URL = url
+		}
+	}
+
+	if !isUpdated {
+		return fmt.Errorf("document not found")
+	}
 	return nil
 }
 
@@ -28,21 +71,16 @@ func (f *FakeIndex) Index() index.Index {
 }
 
 func (f *FakeIndex) Find(request string) ([]crawler.Document, error) {
-	return []crawler.Document{
-		crawler.Document{
-			ID:    uint64(1),
-			Title: "Как использовать git?",
-			URL:   "http://localhost",
-		},
-		crawler.Document{
-			ID:    uint64(2),
-			Title: "Прикладное применение подорожника как лекарство",
-			URL:   "http://localhost",
-		},
-		crawler.Document{
-			ID:    uint64(3),
-			Title: "Криптовалюта как будущее финансовой системы?",
-			URL:   "http://localhost",
-		},
-	}, nil
+	var docs []crawler.Document
+
+	for _, doc := range f.docs {
+		if strings.Contains(doc.Title, request) {
+			docs = append(docs, doc)
+		}
+	}
+
+	if len(docs) == 0 {
+		return nil, fmt.Errorf("document not found")
+	}
+	return docs, nil
 }

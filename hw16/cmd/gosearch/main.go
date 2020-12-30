@@ -14,12 +14,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Gosearch struct {
+type gosearch struct {
 	crawler crawler.Interface
 	engine  *engine.Service
+	api     *api.Service
 }
 
-func (g *Gosearch) ScanAsync(urls []string, depth int) {
+func (g *gosearch) ScanAsync(urls []string, depth int) {
 	dataCh, errCh := g.crawler.BatchScan(urls, depth, 10)
 	var data []crawler.Document
 
@@ -43,6 +44,7 @@ func (g *Gosearch) ScanAsync(urls []string, depth int) {
 
 	tree := tree.NewTree(data)
 	g.engine = engine.New(tree, data)
+	g.api = api.New(mux.NewRouter(), g.engine)
 }
 
 func main() {
@@ -50,13 +52,19 @@ func main() {
 	port := "8000"
 	host := "0.0.0.0"
 
+	data := []crawler.Document{}
+	tree := tree.NewTree(data)
+
 	spdr := spider.New()
-	app := &Gosearch{
+	engn := engine.New(tree, data)
+
+	app := &gosearch{
 		crawler: spdr,
+		engine:  engn,
+		api:     api.New(mux.NewRouter(), engn),
 	}
+
 	app.ScanAsync(urls, 1)
 
-	srv := api.New(mux.NewRouter(), *app.engine)
-
-	http.ListenAndServe(host+":"+port, srv.Router)
+	http.ListenAndServe(host+":"+port, app.api.Router)
 }
