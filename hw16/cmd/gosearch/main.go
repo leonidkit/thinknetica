@@ -20,7 +20,7 @@ type gosearch struct {
 	api     *api.Service
 }
 
-func (g *gosearch) ScanAsync(urls []string, depth int) {
+func (g *gosearch) scanAsync(urls []string, depth int) {
 	dataCh, errCh := g.crawler.BatchScan(urls, depth, 10)
 	var data []crawler.Document
 
@@ -52,11 +52,10 @@ func main() {
 	port := "8000"
 	host := "0.0.0.0"
 
-	data := []crawler.Document{}
-	tree := tree.NewTree(data)
+	tree := tree.NewTree([]crawler.Document{})
 
 	spdr := spider.New()
-	engn := engine.New(tree, data)
+	engn := engine.New(tree, []crawler.Document{})
 
 	app := &gosearch{
 		crawler: spdr,
@@ -64,7 +63,7 @@ func main() {
 		api:     api.New(mux.NewRouter(), engn),
 	}
 
-	app.ScanAsync(urls, 1)
+	app.scanAsync(urls, 1)
 
 	http.ListenAndServe(host+":"+port, app.api.Router)
 }

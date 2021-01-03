@@ -62,7 +62,7 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 	r.Body.Close()
 
 	if req.Title == "" || req.URL == "" {
-		http.Error(w, "\"url\", \"title\" fields should not be empty", http.StatusBadRequest)
+		http.Error(w, `"url", "title" fields should not be empty`, http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (s *Service) Delete(w http.ResponseWriter, r *http.Request) {
 	r.Body.Close()
 
 	if req.ID == 0 {
-		http.Error(w, "\"id\" field should not be empty", http.StatusBadRequest)
+		http.Error(w, `"id" field should not be empty`, http.StatusBadRequest)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (s *Service) Update(w http.ResponseWriter, r *http.Request) {
 	r.Body.Close()
 
 	if req.ID == 0 || req.URL == "" || req.Title == "" {
-		http.Error(w, "\"url\", \"title\", \"id\" fields should not be empty", http.StatusBadRequest)
+		http.Error(w, `"url", "title", "id" fields should not be empty`, http.StatusBadRequest)
 		return
 	}
 
