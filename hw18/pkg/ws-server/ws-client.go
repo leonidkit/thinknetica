@@ -1,4 +1,4 @@
-package main
+package wsserver
 
 import (
 	"bytes"
@@ -12,13 +12,13 @@ var (
 	space   = []byte{' '}
 )
 
-type client struct {
-	srv  *Server
-	conn *websocket.Conn
+type Client struct {
+	Srv  *Server
+	Conn *websocket.Conn
 }
 
-func (c *client) readMsg() {
-	_, message, err := c.conn.ReadMessage()
+func (c *Client) ReadMsg() {
+	_, message, err := c.Conn.ReadMessage()
 	if err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			log.Printf("error client read: %v", err)
@@ -27,11 +27,11 @@ func (c *client) readMsg() {
 	}
 	message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
-	c.srv.Broadcast <- string(message)
+	c.Srv.Broadcast <- string(message)
 }
 
-func (c *client) writeMsg(msg string) {
-	err := c.conn.WriteMessage(websocket.TextMessage, []byte(msg))
+func (c *Client) WriteMsg(msg string) {
+	err := c.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
 	if err != nil {
 		log.Printf("error client write: %v", err)
 	}

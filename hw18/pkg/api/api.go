@@ -1,14 +1,16 @@
-package main
+package wsapi
 
 import (
 	"log"
 	"net/http"
 
+	wsserver "hw18/pkg/ws-server"
+
 	"github.com/gorilla/websocket"
 )
 
-type wsapi struct {
-	srv *Server
+type Wsapi struct {
+	Srv *wsserver.Server
 }
 
 var (
@@ -19,7 +21,7 @@ var (
 	}
 )
 
-func (a *wsapi) send(w http.ResponseWriter, r *http.Request) {
+func (a *Wsapi) send(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -35,53 +37,41 @@ func (a *wsapi) send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if string(message) == "password" {
-			cl := &client{
-				srv:  a.srv,
-				conn: ws,
+			cl := &wsserver.Client{
+				Srv:  a.Srv,
+				Conn: ws,
 			}
 
-			cl.writeMsg("OK")
-			cl.readMsg()
-			cl.writeMsg("CONNECTION CLOSED")
-			cl.conn.Close()
+			cl.WriteMsg("OK")
+			cl.ReadMsg()
+			cl.WriteMsg("CONNECTION CLOSED")
+			cl.Conn.Close()
 			break
 		}
 	}
 
 }
 
-func (a *wsapi) messages(w http.ResponseWriter, r *http.Request) {
+func (a *Wsapi) messages(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	cl := &client{
-		srv:  a.srv,
-		conn: ws,
+	cl := &wsserver.Client{
+		Srv:  a.Srv,
+		Conn: ws,
 	}
 
-	cl.conn.SetCloseHandler(func(code int, text string) error {
-		cl.srv.Unregister <- *cl
+	cl.Conn.SetCloseHandler(func(code int, text string) error {
+		cl.Srv.Unregister <- *cl
 		return nil
 	})
 
-	a.srv.Clients = append(a.srv.Clients, cl)
+	a.Srv.Clients = append(a.Srv.Clients, cl)
 }
 
-func (a *wsapi) endpoints() {
+func (a *Wsapi) Endpoints() {
 	http.HandleFunc("/send", a.send)
 	http.HandleFunc("/messages", a.messages)
-}
-
-func main() {
-	wa := &wsapi{
-		srv: &Server{
-			Broadcast: make(chan string),
-		},
-	}
-	wa.endpoints()
-	wa.srv.run()
-
-	log.Fatal(http.ListenAndServe(":8000", nil))
 }
