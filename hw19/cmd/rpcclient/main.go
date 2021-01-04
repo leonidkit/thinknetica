@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/powerman/rpc-codec/jsonrpc2"
+	"net/rpc/jsonrpc"
 )
 
 type Query struct {
@@ -19,7 +19,7 @@ func main() {
 	host := "0.0.0.0"
 	port := "8001"
 
-	conn, err := jsonrpc2.Dial("tcp", host+":"+port)
+	conn, err := jsonrpc.Dial("tcp", host+":"+port)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -38,7 +38,7 @@ func main() {
 			res := []crawler.Document{}
 			query := Query{Data: word}
 
-			err = jsonrpc2.WrapError(conn.Call("RPCsrv.Search", query, &res))
+			err = conn.Call("RPCsrv.Search", query, &res)
 			if err != nil {
 				log.Printf("error: %q\n", err)
 			}

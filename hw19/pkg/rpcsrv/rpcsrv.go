@@ -5,9 +5,9 @@ import (
 	"gosearch/pkg/engine"
 	"log"
 	"net"
-	"net/rpc"
 
-	"github.com/powerman/rpc-codec/jsonrpc2"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 )
 
 type RPCsrv struct {
@@ -28,14 +28,14 @@ func (r *RPCsrv) Search(query Query, result *[]crawler.Document) error {
 	return nil
 }
 
-func Serve(host, port string, e *engine.Service) {
+func Serve(host, port string, engn *engine.Service) {
 	listener, err := net.Listen("tcp4", host+":"+port)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 	defer listener.Close()
 
-	err = rpc.Register(&RPCsrv{e})
+	err = rpc.Register(&RPCsrv{engn})
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -46,6 +46,6 @@ func Serve(host, port string, e *engine.Service) {
 			log.Fatalf("error: %v", err)
 		}
 
-		go jsonrpc2.ServeConn(conn)
+		go jsonrpc.ServeConn(conn)
 	}
 }
