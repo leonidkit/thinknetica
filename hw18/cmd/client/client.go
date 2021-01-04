@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	promt = "-> "
+	prompt = "-> "
 )
 
 func main() {
@@ -43,14 +43,14 @@ func main() {
 				return
 			}
 			log.Printf("recv: %s", message)
-			log.Print(promt)
+			log.Print(prompt)
 		}
 	}()
 
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		log.Print(promt)
+		log.Print(prompt)
 
 		text, err := reader.ReadString('\n')
 		if err != nil {
@@ -73,7 +73,6 @@ func main() {
 		_, ok, err := csend.ReadMessage()
 		if err != nil {
 			log.Fatal("read message error:", err)
-			return
 		}
 		if string(ok) != "OK" {
 			log.Fatalf("connection error: server return %s, but expected OK", string(ok))
@@ -82,7 +81,6 @@ func main() {
 		err = csend.WriteMessage(websocket.TextMessage, []byte(text))
 		if err != nil {
 			log.Fatalf("write message error: %v", err)
-			break
 		}
 
 		csend.Close()

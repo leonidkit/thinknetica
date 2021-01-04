@@ -1,4 +1,4 @@
-module hw18/pkg/ws-server
+module hw18/pkg/ws-hub
 
 go 1.15
 

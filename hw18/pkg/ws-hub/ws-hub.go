@@ -1,12 +1,12 @@
-package wsserver
+package wshub
 
-type Server struct {
+type Hub struct {
 	Clients    []*Client
 	Unregister chan Client
 	Broadcast  chan string
 }
 
-func (s *Server) Run() {
+func (s *Hub) Run() {
 	go func() {
 		for {
 			select {

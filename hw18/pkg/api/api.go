@@ -4,13 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	wsserver "hw18/pkg/ws-server"
+	wshub "hw18/pkg/ws-hub"
 
 	"github.com/gorilla/websocket"
 )
 
 type Wsapi struct {
-	Srv *wsserver.Server
+	Hub *wshub.Hub
 }
 
 var (
@@ -37,8 +37,8 @@ func (a *Wsapi) send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if string(message) == "password" {
-			cl := &wsserver.Client{
-				Srv:  a.Srv,
+			cl := &wshub.Client{
+				Hub:  a.Hub,
 				Conn: ws,
 			}
 
@@ -58,17 +58,17 @@ func (a *Wsapi) messages(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err.Error())
 	}
 
-	cl := &wsserver.Client{
-		Srv:  a.Srv,
+	cl := &wshub.Client{
+		Hub:  a.Hub,
 		Conn: ws,
 	}
 
 	cl.Conn.SetCloseHandler(func(code int, text string) error {
-		cl.Srv.Unregister <- *cl
+		cl.Hub.Unregister <- *cl
 		return nil
 	})
 
-	a.Srv.Clients = append(a.Srv.Clients, cl)
+	a.Hub.Clients = append(a.Hub.Clients, cl)
 }
 
 func (a *Wsapi) Endpoints() {

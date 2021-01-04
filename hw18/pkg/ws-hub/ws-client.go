@@ -1,4 +1,4 @@
-package wsserver
+package wshub
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ var (
 )
 
 type Client struct {
-	Srv  *Server
+	Hub  *Hub
 	Conn *websocket.Conn
 }
 
@@ -27,7 +27,7 @@ func (c *Client) ReadMsg() {
 	}
 	message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
-	c.Srv.Broadcast <- string(message)
+	c.Hub.Broadcast <- string(message)
 }
 
 func (c *Client) WriteMsg(msg string) {

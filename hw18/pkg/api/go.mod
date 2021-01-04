@@ -5,5 +5,5 @@ go 1.15
 require github.com/gorilla/websocket v1.4.2
 
 replace (
-    hw18/pkg/ws-server => ../ws-server
+    hw18/pkg/ws-hub => ../ws-hub
 )
