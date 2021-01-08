@@ -1,109 +1,111 @@
 -- выборка фильмов с названием студии
 SELECT 
-    f.TITLE,
-    pc.TITLE  
+    f.title,
+    s.title  
 FROM 
-    FILM f 
+    film f 
     JOIN 
-        PRODUCTION_COMPANY pc 
-        ON f.PRODUCTION_COMPANY_ID = pc.ID;
+        studio s 
+        ON f.studio_id = s.id;
 
 -- выборка фильмов для некоторого актёра
 SELECT
-   f.TITLE,
-   a.NAME 
+   f.title,
+   a.name 
 FROM
-   FILM_ACTOR fa 
+   film_actor fa 
    JOIN
-      FILM f 
-      ON f.ID = fa.FILM_ID 
+      film f 
+      ON f.id = fa.fim_id 
    JOIN
-      ACTOR a 
-      ON a.ID = fa.ACTOR_ID 
+      actor a 
+      ON a.id = fa.actor_id 
 WHERE
-   a.NAME = 'Mills, Adria J.';
+   a.name = 'Mills, Adria J.';
 
 -- подсчёт фильмов для некоторого режиссёра
 SELECT
    count(1)
 FROM
-   FILM_DIRECTOR fd
+   film_producer fp
    JOIN
-      DIRECTOR d
-      ON d.ID = fd.DIRECTOR_ID 
+      producer d
+      ON d.id = fp.producer_id 
 WHERE
-   d.NAME = 'Warner, Sasha R.';
+   d.name = 'Warner, Sasha R.';
 
 -- выборка фильмов для нескольких режиссёров из списка (подзапрос)
 -- непонятна формулировка
 SELECT
-   f.TITLE,
-   a.NAME 
+   f.title,
+   p.name 
 FROM
-   FILM_ACTOR fa 
+   film_producer fp 
    JOIN
-      FILM f 
-      ON f.ID = fa.FILM_ID 
+      film f 
+      ON f.id = fp.film_id 
    JOIN
-      ACTOR a 
-      ON a.ID = fa.ACTOR_ID 
+      producer p
+      ON p.id = fp.actor_id
 WHERE
-   a.NAME IN ('Warner, Sasha R.', 'Mills, Adria J.');
+   a.name IN ('Warner, Sasha R.', 'Mills, Adria J.');
+
+
 
 -- подсчёт количества фильмов для актёра
 SELECT
    COUNT(1)
 FROM
-   FILM_ACTOR fa 
+   film_actor fa 
    JOIN
-      ACTOR a 
-      ON a.ID = fa.ACTOR_ID 
+      actor a 
+      ON a.id = fa.actor_id 
 WHERE
-   a.NAME = 'Mills, Adria J.';
+   a.name = 'Mills, Adria J.';
    
 -- выборка актёров и режиссёров, участвовавших более чем в 2 фильмах
 SELECT
-   a.NAME,
+   a.name,
    count(1) 
 FROM
-   FILM_ACTOR fa 
+   film_actor fa 
    JOIN
-      ACTOR a 
-      ON fa.ACTOR_ID = a.ID 
+      actor a 
+      ON fa.actor_id = a.id 
 GROUP BY
-(a.NAME) 
+(a.name) 
 HAVING
    count(1) > 2 
 UNION ALL
 SELECT
-   d.NAME,
+   d.name,
    count(1) 
 FROM
-   FILM_DIRECTOR fd 
+   film_producer fp 
    JOIN
-      DIRECTOR d 
-      ON fd.DIRECTOR_ID = d.ID 
+      producer d 
+      ON fp.producer_id = d.id 
 GROUP BY
-(d.NAME) 
+(d.name) 
 HAVING
    count(1) > 2
 
 -- подсчёт количества фильмов со сборами больше 1000
-SELECT count(1) FROM FILM WHERE BOX_OFFICE > 1000
+SELECT count(1) FROM film WHERE box_office > 1000
 
 -- подсчитать количество режиссёров, фильмы которых собрали больше 1000
 SELECT
    count(1) 
 FROM
-   FILM f 
+   film f 
    JOIN
-      FILM_DIRECTOR fd 
-      ON fd.FILM_ID = f.ID 
+      film_producer fp 
+      ON fp.fim_id = f.id 
 WHERE
-   BOX_OFFICE > 1000
+   box_office > 1000
 
 -- выборка различных фамилий актёров
-SELECT DISTINCT a.NAME FROM ACTOR a
+SELECT DISTINCT a.name FROM actor a
 
 -- подсчёт количества фильмов, имеющих дубли по названию
 SELECT
@@ -111,11 +113,11 @@ SELECT
 FROM
    (
       SELECT
-         TITLE
+         title
       FROM
-         FILM 
+         film 
       GROUP BY
-         TITLE 
+         title 
       HAVING
          COUNT(1) > 1
    )
