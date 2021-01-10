@@ -2,6 +2,7 @@ package memstore
 
 import (
 	"hw21/pkg/storage"
+	"sync"
 )
 
 var (
@@ -42,19 +43,28 @@ var (
 )
 
 type DB struct {
+	mux   *sync.Mutex
 	films []storage.Film
 }
 
 func New() *DB {
-	return &DB{films: data}
+	return &DB{
+		films: data,
+		mux:   new(sync.Mutex),
+	}
 }
 
 func (d *DB) AddFilms(f []storage.Film) error {
+	d.mux.Lock()
 	d.films = append(d.films, f...)
+	d.mux.Unlock()
 	return nil
 }
 
 func (d *DB) DeleteFilm(f storage.Film) error {
+	d.mux.Lock()
+	defer d.mux.Unlock()
+
 	for idx, film := range d.films {
 		if f.ID == film.ID {
 			d.films[idx] = d.films[len(d.films)-1]
@@ -66,6 +76,9 @@ func (d *DB) DeleteFilm(f storage.Film) error {
 }
 
 func (d *DB) UpdateFilm(f storage.Film) error {
+	d.mux.Lock()
+	defer d.mux.Unlock()
+
 	for idx, f := range d.films {
 		if f.ID == f.ID {
 			d.films[idx] = f
@@ -75,6 +88,9 @@ func (d *DB) UpdateFilm(f storage.Film) error {
 }
 
 func (d *DB) Films(id int64) ([]storage.Film, error) {
+	d.mux.Lock()
+	defer d.mux.Unlock()
+
 	if id != 0 {
 		for _, f := range d.films {
 			if f.ID == id {

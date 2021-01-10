@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"hw21/pkg/storage"
 	"log"
@@ -48,18 +49,20 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
+	var ctx context.Context = context.Background()
+
 	strg, err = New("127.0.0.1", "5432", "admin", "admin", "store", false)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 	defer strg.Close()
 
-	_, err = strg.db.Exec("DELETE FROM film")
+	_, err = strg.conn.Exec(ctx, "DELETE FROM film")
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 
-	_, err = strg.db.Exec("ALTER SEQUENCE film_id_seq RESTART WITH 1")
+	_, err = strg.conn.Exec(ctx, "ALTER SEQUENCE film_id_seq RESTART WITH 1")
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
@@ -69,6 +72,34 @@ func TestMain(m *testing.M) {
 	os.Exit(exitVal)
 }
 
+func TestDB(t *testing.T) {
+	err := strg.AddFilms(films)
+	if err != nil {
+		log.Fatalf("обнаружена ошибка при добавлении фильмов: %+v\n", err)
+	}
+
+	filmNew := films[1]
+	filmNew.Title = "Большой куш 2"
+	err = strg.UpdateFilm(filmNew)
+	if err != nil {
+		log.Fatalf("обнаружена ошибка при обновлении фильма с id == %d: %+v\n", filmNew.ID, err)
+	}
+
+	err = strg.DeleteFilm(films[0])
+	if err != nil {
+		log.Fatalf("обнаружена ошибка при удалении фильма с id == %d: %+v\n", films[0].ID, err)
+	}
+
+	res, err := strg.Films(0)
+	if err != nil {
+		log.Fatalf("обнаружена ошибка при получении списка всех фильмов: %+v\n", err)
+	}
+
+	if len(res) != len(films)-1 {
+		log.Fatalf("ожидалось %d записей, получено %d", len(films)-1, len(res))
+	}
+}
+
 func TestDB_AddFilms(t *testing.T) {
 	err := strg.AddFilms(films)
 	if err != nil {
@@ -76,7 +107,7 @@ func TestDB_AddFilms(t *testing.T) {
 	}
 
 	// проверяем, что все необходимые строки вставлены
-	rows, err := strg.db.Query("SELECT * FROM film")
+	rows, err := strg.conn.Query(context.Background(), "SELECT * FROM film")
 	for rows.Next() {
 		var film storage.Film
 
@@ -113,15 +144,10 @@ func TestDB_DeleteFilm(t *testing.T) {
 		log.Fatalf("обнаружена ошибка: %+v\n", err)
 	}
 
-	row := strg.db.QueryRow("SELECT * FROM film WHERE id = $1", films[0].ID)
+	row := strg.conn.QueryRow(context.Background(), "SELECT * FROM film WHERE id = $1", films[0].ID)
 	err = row.Scan()
 	if err != sql.ErrNoRows {
 		log.Fatalf("ожидалось, что запись с ID = %d будет удалена", films[0].ID)
-	}
-
-	err = strg.DeleteFilm(storage.Film{ID: 0})
-	if err == nil {
-		log.Fatal("ожидалась ошибка, но не была получена")
 	}
 }
 
@@ -135,7 +161,7 @@ func TestDB_UpdateFilm(t *testing.T) {
 	}
 
 	var f storage.Film
-	row := strg.db.QueryRow("SELECT * FROM film WHERE id = $1", films[1].ID)
+	row := strg.conn.QueryRow(context.Background(), "SELECT * FROM film WHERE id = $1", films[1].ID)
 	err = row.Scan(
 		&f.ID,
 		&f.Title,
@@ -150,11 +176,6 @@ func TestDB_UpdateFilm(t *testing.T) {
 
 	if f.Title != filmNew.Title {
 		log.Fatalf("ожидалась запись с Title = %s, а получена Title = %s", filmNew.Title, films[1].Title)
-	}
-
-	err = strg.UpdateFilm(storage.Film{ID: 0})
-	if err == nil {
-		log.Fatal("ожидалась ошибка, но не была получена")
 	}
 }
 

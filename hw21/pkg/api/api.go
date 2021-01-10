@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	_ "github.com/jackc/pgx/v4"
 )
 
 type Service struct {
@@ -61,11 +62,6 @@ func (s *Service) deleteFilmHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if film.ID == 0 {
-		http.Error(w, "you must pass the record id", http.StatusInternalServerError)
-		return
-	}
-
 	err = s.strg.DeleteFilm(film)
 	if err != nil {
 		http.Error(w, "deleting data error: "+err.Error(), http.StatusInternalServerError)
@@ -82,11 +78,6 @@ func (s *Service) updateFilmHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-
-	if film.ID == 0 {
-		http.Error(w, "you must pass the record id", http.StatusInternalServerError)
-		return
-	}
 
 	err = s.strg.UpdateFilm(film)
 	if err != nil {
